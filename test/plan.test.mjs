@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { keywordHits, plan, summarize } from '../src/plan.mjs';
 
-const config = JSON.parse(readFileSync(new URL('../src/profiles.json', import.meta.url), 'utf8'));
+// Fixture, not src/profiles.json: these tests exercise the plan logic against the upstream profile set.
+const config = JSON.parse(readFileSync(new URL('./fixtures/profiles.upstream.json', import.meta.url), 'utf8'));
 
 const status = {
   servers: [

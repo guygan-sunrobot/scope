@@ -1,19 +1,22 @@
 # STATUS
 
-Goal: <one line: what this project or current task is for>
-Updated: <YYYY-MM-DD>
+เป้าหมาย: <หนึ่งบรรทัด: โปรเจกต์หรืองานนี้ทำเพื่ออะไร>
+อัปเดต: <YYYY-MM-DD>
 
-## Done
-- <finished steps, one line each; drop items once they no longer matter>
+## Done (ทำแล้ว)
+- <ขั้นที่เสร็จ บรรทัดละข้อ; ลบทิ้งเมื่อไม่เกี่ยวแล้ว>
 
-## Decisions
-- <choice> because <reason>
+## Decisions (ตัดสินใจแล้ว)
+- <ทางเลือก> เพราะ <เหตุผล>
 
-## Key files
-- `<path>`: <what it holds>
+## Key files (ไฟล์สำคัญ)
+- `<path>`: <ไฟล์นี้เก็บอะไร>
 
-## Next
-1. <the very next concrete step>
+## Measurements (ผลวัด/ทดสอบ)
+- <ค่าที่วัดได้ ผลทดสอบ เงื่อนไข เช่น บอร์ด/ไฟล์/เวอร์ชัน>
 
-## Open questions
-- <what is undecided or needs the user>
+## Next (ทำต่อ)
+1. <ขั้นถัดไปที่ชัดเจนที่สุด>
+
+## Open questions (ยังไม่ตัดสินใจ)
+- <อะไรที่ยังไม่แน่ใจหรือต้องถามผู้ใช้>
