@@ -143,7 +143,9 @@ async function runHook(event, config) {
         const target = restorable
           ? 'STATUS.md at the repo root'
           : input.cwd
-            ? `${privateStatusPath(dataDir, input.cwd)} (private handoff file; create its folder if missing)`
+            ? config.status.inFolder
+              ? `${privateStatusPath(dataDir, input.cwd, true)} (the working folder's own STATUS.md)`
+              : `${privateStatusPath(dataDir, input.cwd)} (private handoff file; create its folder if missing)`
             : null;
         const d = !config.handoff.enabled ? { state, log: null } : await decide(
           { sessionId: input.session_id, contextTokens, lines, prompt: input.prompt, restorable: !!target, target: target ?? undefined, autoClear: !!target && autoClearOn(config, { headless }) },
@@ -176,7 +178,7 @@ async function runHook(event, config) {
     let s = loadStatusContext(input.cwd, config.status);
     if (!s && input.cwd && input.source === 'clear') s = loadPrivateStatus(dataDir, input.cwd, config.status);
     try {
-      const recap = s && input.cwd ? takePending(dataDir, { cwd: resolve(input.cwd), source: input.source }) : null;
+      const recap = s && input.cwd ? takePending(dataDir, { cwd: resolve(input.cwd), source: input.source, exportChat: config.handoff.autoClear.export !== false }) : null;
       if (recap) contexts.push(recap);
       const moved = pruneExports(dataDir, config.handoff.autoClear.keepExports);
       if (moved.length) log(dataDir, { cmd: 'autoclear-prune', moved });

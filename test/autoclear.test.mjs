@@ -131,3 +131,31 @@ test('an export with no clear after it asks for the clear once', async () => {
   const off = await decide({ sessionId: 't', contextTokens: 120000, lines, prompt: 'x', autoClear: false }, {}, cfg);
   assert.notEqual(off.log?.gate, 'stalled-clear');
 });
+
+test('status.inFolder keeps the handoff in the working folder and restores it after a clear', () => {
+  const dir = tmp();
+  const repo = tmp();
+  const path = privateStatusPath(dir, repo, true);
+  assert.equal(path, join(repo, 'STATUS.md'));
+  assert.equal(loadPrivateStatus(dir, repo, { maxChars: 6000, inFolder: true }), null);
+  writeFileSync(path, '# STATUS\n## Next\n1. y');
+  assert.match(loadPrivateStatus(dir, repo, { maxChars: 6000, inFolder: true }), /1\. y/);
+  assert.ok(!existsSync(join(dir, 'handoff')), 'nothing written under dataDir');
+});
+
+test('autoClear.export off: no export step, no Downloads zip recorded, stalled clear still detected', () => {
+  const { context, message } = autoClearNote(150000, 'commit', undefined, false);
+  assert.doesNotMatch(context + message, /export|Downloads/);
+  assert.ok(context.includes('clear_session') && context.includes('set_session_title'));
+  const dir = tmp();
+  const dl = tmp();
+  writeFileSync(join(dl, 'session-export-1.zip'), 'x');
+  markPending(dir, { cwd: '/p', now: 1000 });
+  const recap = takePending(dir, { cwd: '/p', source: 'clear', now: 2000, downloads: dl, exportChat: false });
+  assert.doesNotMatch(recap, /Downloads/);
+  assert.ok(!existsSync(join(dir, 'exports.json')), 'no export recorded');
+  const use = (name, ts, input = {}) => JSON.stringify({ type: 'assistant', timestamp: ts, message: { content: [{ type: 'tool_use', name, input }] } });
+  const titled = [use('mcp__ccd_session_mgmt__set_session_title', '2026-09-27T14:26:10Z', { title: CLEARED_TITLE })];
+  assert.equal(stalledExport(titled), '2026-09-27T14:26:10Z');
+  assert.equal(stalledExport([...titled, use('mcp__ccd_session_mgmt__clear_session', '2026-09-27T14:26:12Z')]), null);
+});

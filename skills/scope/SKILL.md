@@ -13,7 +13,7 @@ connector ที่เปิดอยู่ทุกตัวจะเพิ่�
 
 - `UserPromptSubmit` รัน `scope hook-prompt` เงียบไว้ เว้นแต่ข้อความพูดถึงงานที่ใช้ connector (เช่น "ขึ้น Google Drive", "เปิด Claude Docs") จึงมีโน้ต `scope:` ขอให้เปิด connector นั้น เปิดเมื่อจำเป็นจริงเท่านั้น บอกผู้ใช้ว่ามีผลเทิร์นถัดไป แล้วหยุด
 - เมื่อ context >= 100k และเพิ่งจบขั้นงาน (commit, test ผ่าน, แก้ STATUS.md, "โอเค/ok", เปลี่ยนหัวข้อ, ว่าง 30 นาที) หรือ context >= 300k ไม่ว่าจะเป็นอย่างไร จะมีโน้ต `scope:` ให้ปรับ `STATUS.md` ของโปรเจกต์หลังตอบข้อความนี้ แล้วบอกผู้ใช้ว่า `/clear` ได้ ผู้ใช้เป็นคน clear เอง
-- `SessionStart` รัน `scope hook-start` ตอน startup, `/clear` และ compaction จะใส่ `STATUS.md` ของโปรเจกต์ (เฉพาะใต้ `status.trustedRoots` และตัดที่ `status.maxChars`; โฟลเดอร์อื่นใช้ไฟล์ handoff ส่วนตัวใน `~/.local/share/scope/handoff/` และคืนเฉพาะหลัง clear) ให้ทำต่อจากหัวข้อ `## Next` ถ้างานก่อนหน้าทิ้ง connector ไว้ จะขอให้ปิด เว้นแต่ข้อความแรกต้องใช้
+- `SessionStart` รัน `scope hook-start` ตอน startup, `/clear` และ compaction จะใส่ `STATUS.md` ของโปรเจกต์ (เฉพาะใต้ `status.trustedRoots` และตัดที่ `status.maxChars`; โฟลเดอร์อื่นใช้ `STATUS.md` ในโฟลเดอร์งานเอง เพราะ `status.inFolder` เปิดอยู่ (ถ้าปิด จะใช้ไฟล์ส่วนตัวใน `~/.local/share/scope/handoff/`) และคืนเฉพาะหลัง clear ภายใน 24 ชม.) ให้ทำต่อจากหัวข้อ `## Next` ถ้างานก่อนหน้าทิ้ง connector ไว้ จะขอให้ปิด เว้นแต่ข้อความแรกต้องใช้
 - ปิดแต่ละฟีเจอร์ได้ที่ `/scope:setup` หรือ `scope features set <name>=on|off` ปิดทั้งหมด: `SCOPE_OFF=1`
 
 การสลับ connector: โหลด `mcp__ccd_connectors__set_session_connector_enabled` ผ่าน ToolSearch เรียกทีละ connector พร้อมกันในชุดเดียว ผลมีเมื่อจบเทิร์นและเป็นค่าเริ่มต้นของ session ใหม่

@@ -27,12 +27,18 @@ export const BACKGROUND_CLAUSE =
   `Work that runs on its own (background workers or CLIs in other worktrees, VM jobs, subagents) is not unfinished work: ` +
   `list each one in Next with where it runs, its branch or log, and how to check it, so the next session picks it up. `;
 
-export function autoClearNote(contextTokens, reason, target = 'STATUS.md at the repo root') {
+// exportChat false (autoClear.export off): the saved state is enough, so no zip is written to ~/Downloads.
+export function autoClearNote(contextTokens, reason, target = 'STATUS.md at the repo root', exportChat = true) {
   const k = Math.round(contextTokens / 1000);
   const size = reason === 'size';
+  const steps = exportChat ? 'save its state, export this chat to ~/Downloads, then clear' : 'save its state, then clear';
   const message = size
-    ? `scope: context ${k}k tokens, over the limit. Claude will save its state, export this chat to ~/Downloads, then clear.`
-    : `scope: context ${k}k tokens and a step looks finished (${reason}). Claude will save its state, export this chat to ~/Downloads, then clear.`;
+    ? `scope: context ${k}k tokens, over the limit. Claude will ${steps}.`
+    : `scope: context ${k}k tokens and a step looks finished (${reason}). Claude will ${steps}.`;
+  const tools = exportChat ? `${EXPORT_TOOL}, ${CLEAR_TOOL} and ${TITLE_TOOL}` : `${CLEAR_TOOL} and ${TITLE_TOOL}`;
+  const exportStep = exportChat
+    ? `call the export with session_id "self" (if it is refused, tell the user state is saved, the export failed, and to type /clear when ready, and stop); `
+    : '';
   const context =
     (size
       ? `scope: context is ${k}k tokens, over the handoff limit, and every request re-reads it. ` +
@@ -42,27 +48,31 @@ export function autoClearNote(contextTokens, reason, target = 'STATUS.md at the 
     BACKGROUND_CLAUSE +
     `At the end of this turn: write ${target} (Goal, Done, Decisions, Key files, Next, Open questions; under ~80 lines; ` +
     `rewrite stale lines instead of appending; keep an existing file's language and layout; put anything the user still needs from your reply into Next); ` +
-    `load ${EXPORT_TOOL}, ${CLEAR_TOOL} and ${TITLE_TOOL} in one ToolSearch call (if export or clear is missing, tell the user state is saved and to type /clear, and stop); ` +
-    `call the export with session_id "self" (if it is refused, tell the user state is saved, the export failed, and to type /clear when ready, and stop); ` +
+    `load ${tools} in one ToolSearch call (if ${exportChat ? 'export or clear is' : 'clear is'} missing, tell the user state is saved and to type /clear, and stop); ` +
+    exportStep +
     `set this session's title to "${CLEARED_TITLE}" (skip it if the title tool is missing or refused); ` +
-    `tell the user in one line that state is saved, the chat was exported to Downloads, and the session is clearing; ` +
+    `tell the user in one line that state is saved${exportChat ? ', the chat was exported to Downloads,' : ''} and the session is clearing; ` +
     `then call the clear with session_id "self" as your last action (if it is refused, tell the user to type /clear).`;
   return { message, context };
 }
 
-// Timestamp of a handoff export (export plus the cleared title) that no clear followed
+// Timestamp of a handoff (the cleared title, after an export when there is one) that no clear followed
 // (a new user message cut the handoff turn short), else null. A plain export the user asked for does not count.
 export function stalledExport(lines) {
   let at = null;
   let titled = false;
   for (const l of lines) {
     if (!l.includes('"tool_use"')) continue;
+    const stamp = l.match(/"timestamp":"([^"]+)"/)?.[1] ?? 'unknown';
     if (l.includes(`"name":"${CLEAR_TOOL}"`)) at = null;
     else if (l.includes(`"name":"${EXPORT_TOOL}"`)) {
-      at = l.match(/"timestamp":"([^"]+)"/)?.[1] ?? 'unknown';
+      at = stamp;
       titled = false;
     }
-    if (l.includes(`"name":"${TITLE_TOOL}"`)) titled = l.includes(CLEARED_TITLE);
+    if (l.includes(`"name":"${TITLE_TOOL}"`)) {
+      titled = l.includes(CLEARED_TITLE);
+      if (titled) at ??= stamp; // no export in this handoff: the title marks it
+    }
   }
   return at && titled ? at : null;
 }
@@ -98,7 +108,7 @@ export function markPending(dataDir, { cwd, session, now = Date.now() }) {
 }
 
 // SessionStart after a clear (or the desktop tool's fresh startup): consume the mark, record the exports made since it, return recap context.
-export function takePending(dataDir, { cwd, source, now = Date.now(), downloads = join(homedir(), 'Downloads') }) {
+export function takePending(dataDir, { cwd, source, now = Date.now(), downloads = join(homedir(), 'Downloads'), exportChat = true }) {
   const path = join(dataDir, PENDING);
   const p = readJson(path, null);
   if (!p) return null;
@@ -109,14 +119,14 @@ export function takePending(dataDir, { cwd, source, now = Date.now(), downloads 
   const cleared = source === 'clear' || (source === 'startup' && now - p.at <= STARTUP_MAX_MS);
   if (!cleared || p.cwd !== cwd) return null;
   writeJson(path, null);
-  recordExports(dataDir, downloads, p.at - 60000, now);
+  if (exportChat) recordExports(dataDir, downloads, p.at - 60000, now);
   // The desktop app has no button to bring a cleared chat back; the CLI can.
   const resume = /^[\w-]+$/.test(p.session ?? '')
     ? `End the recap with one line: the old chat opens again in a terminal with \`claude --resume ${p.session}\`. `
     : '';
   return (
     `scope: this session was cleared automatically after a handoff; the user no longer sees the old chat ` +
-    `(an export zip is in ~/Downloads). Open your first reply with a 2-3 line recap in the user's language: ` +
+    `${exportChat ? '(an export zip is in ~/Downloads). ' : ''}Open your first reply with a 2-3 line recap in the user's language: ` +
     `what was just finished and what Next says, from the saved state below. ` +
     resume +
     `Then load ${TITLE_TOOL} and set a short title (3-6 words) naming the current work, replacing the "${CLEARED_TITLE}" placeholder.`

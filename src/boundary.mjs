@@ -119,6 +119,6 @@ export async function decide({ sessionId, contextTokens, lines, prompt, now, res
     return { note: null, state, log: null };
   }
   markHandoff(state, sessionId, contextTokens);
-  const note = autoClear ? autoClearNote(contextTokens, reason, target) : handoffNote(contextTokens, reason, restorable, target);
+  const note = autoClear ? autoClearNote(contextTokens, reason, target, config.handoff.autoClear.export !== false) : handoffNote(contextTokens, reason, restorable, target);
   return { note, autoClear, state, log: { gate: g.action, reason, p: jev?.p, latency_ms: jev?.latency_ms, autoClear } };
 }

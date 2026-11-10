@@ -26,7 +26,8 @@
   },
   "status": {
     "maxChars": 6000,
-    "trustedRoots": []
+    "trustedRoots": [],
+    "inFolder": true
   },
   "handoff": {
     "min": 100000,
@@ -39,7 +40,8 @@
     },
     "autoClear": {
       "enabled": false,
-      "keepExports": 5
+      "keepExports": 5,
+      "export": false
     },
     "enabled": true
   },

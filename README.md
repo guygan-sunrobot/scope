@@ -32,7 +32,8 @@ Change them with `/scope:setup`, or `scope features set autoClear=on idleBlock=o
 ## Where state goes
 
 - Projects listed in `status.trustedRoots` keep their state in `STATUS.md` at the repo root (template in `templates/STATUS.md`). The list is empty by default, so a cloned repo's `STATUS.md` can never steer Claude.
-- Everywhere else the state goes to a private file under `~/.local/share/scope/handoff/`, restored only after a clear in the same folder within 24 hours.
+- Everywhere else the state goes to a private file under `~/.local/share/scope/handoff/`, restored only after a clear in the same folder within 24 hours. With `status.inFolder: true` (on in this fork) it is `STATUS.md` in the working folder instead, with the same restore rule; a cloned repo's own fresh `STATUS.md` would be restored too, so keep it off for folders you do not trust.
+- `handoff.autoClear.export: false` (off in this fork) skips the chat export, so no `session-export-*.zip` lands in `~/Downloads`; the saved state is what the next session reads.
 
 To use repo `STATUS.md` files for your own projects, add their parent folder in `~/.config/scope/config.json`:
 
@@ -107,6 +108,7 @@ plugin สำหรับ Claude Code ที่ลด token ซึ่งถู�
 ### สถานะงานเก็บที่ไหน
 
 - โปรเจกต์ใต้โฟลเดอร์ใน `status.trustedRoots` เก็บใน `STATUS.md` ที่ root ของ repo ค่าเริ่มต้นว่าง เพื่อไม่ให้ `STATUS.md` ของ repo ที่ clone มาสั่ง Claude ได้
-- ที่อื่นเก็บในไฟล์ส่วนตัวใต้ `~/.local/share/scope/handoff/` คืนให้เฉพาะหลัง clear ในโฟลเดอร์เดิมภายใน 24 ชั่วโมง
+- ที่อื่นเก็บในไฟล์ส่วนตัวใต้ `~/.local/share/scope/handoff/` คืนให้เฉพาะหลัง clear ในโฟลเดอร์เดิมภายใน 24 ชั่วโมง ถ้าตั้ง `status.inFolder: true` (เปิดใน fork นี้) จะเก็บเป็น `STATUS.md` ในโฟลเดอร์งานแทน ใช้กฎคืนค่าเดียวกัน แต่ `STATUS.md` ที่มากับ repo ที่เพิ่ง clone ก็จะถูกคืนด้วย ควรปิดสำหรับโฟลเดอร์ที่ไม่ไว้ใจ
+- `handoff.autoClear.export: false` (ปิดใน fork นี้) ข้ามการ export แชต จึงไม่มีไฟล์ `session-export-*.zip` ใน `~/Downloads` session ถัดไปอ่านจากสถานะที่บันทึกไว้
 
 ตั้งค่าเองใน `~/.config/scope/config.json` (ทับค่าเริ่มต้นของ plugin และไม่หายตอนอัปเดต) ตัวอย่างอยู่ในส่วนภาษาอังกฤษด้านบน

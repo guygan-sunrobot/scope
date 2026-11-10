@@ -56,13 +56,16 @@ export function loadStatusContext(cwd, { maxChars, trustedRoots }) {
 
 // Outside trusted roots the handoff state goes to a private file only Claude writes,
 // so a clear works in any folder without trusting the repo's own STATUS.md.
-export function privateStatusPath(dataDir, cwd) {
+// inFolder (status.inFolder): keep it as STATUS.md in the working folder instead of under dataDir.
+// shortcut: a freshly cloned repo's STATUS.md is restored after a /clear within 24h of its mtime; upgrade by recording a hash when Claude writes it.
+export function privateStatusPath(dataDir, cwd, inFolder = false) {
+  if (inFolder) return join(resolve(cwd), STATUS_FILE);
   return join(dataDir, 'handoff', createHash('sha1').update(resolve(cwd)).digest('hex').slice(0, 16) + '.md');
 }
 
 // Restored only right after a clear, and only if written in the last day.
-export function loadPrivateStatus(dataDir, cwd, { maxChars }, now = Date.now()) {
-  const path = privateStatusPath(dataDir, cwd);
+export function loadPrivateStatus(dataDir, cwd, { maxChars, inFolder }, now = Date.now()) {
+  const path = privateStatusPath(dataDir, cwd, inFolder);
   try {
     if (now - statSync(path).mtimeMs > 24 * 3600 * 1000) return null;
     return statusContext(path, readFileSync(path, 'utf8'), maxChars);
